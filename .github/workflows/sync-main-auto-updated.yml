@@ -60,6 +60,7 @@ jobs:
 
               # Execute only when source platform vars fragment exists
               if [ -f "$source_fragment" ]; then
+                ls -la "$source_fragment"
                 sed 's/^---/\n/g' "$source_fragment" >> "$file"
               fi
 
