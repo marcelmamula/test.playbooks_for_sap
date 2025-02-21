@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          path: repo_playbooks
 
       - name: Create or update publish branch
         run: |
@@ -33,7 +35,7 @@ jobs:
 
       - name: Copy shared files to scenarios
         run: |
-          for dir in deploy_scenarios/*; do
+          for dir in ./deploy_scenarios/*; do
             # Copy tasks and update paths
             cp ./common_fragments/tasks/*.yml $dir/optional/
             sed -i 's/..\/..\/common_fragments\/tasks\//optional\//' $dir/ansible_playbook.yml
@@ -44,24 +46,23 @@ jobs:
 
       - name: Append shared vars to scenario vars
         run: |
-          # Install yq for yaml merging
-          sudo apt-get install -y yq
-
           # Loop through all scenarios
-          for dir in deploy_scenarios/*; do
+          for dir in ./deploy_scenarios/*; do
 
             # Loop through all valid extravars files
             for file in "$dir"/ansible_extravars_*_base.yml; do
               # Extract platform name
               platform=$(echo "$file" | sed 's/ansible_extravars_\(.*\)_base.yml/\1/')
-              source_fragment="../../common_fragments/vars/platform_${platform}.yml"
-              target_file="${file%_base.yml}.yml"
+              source_fragment="$GITHUB_WORKSPACE/repo_playbooks/common_fragments/vars/platform_${platform}.yml"
 
               # Execute only when source platform vars fragment exists
               if [ -f "$source_fragment" ]; then
-                yq eval '. * load("'$source_fragment'")' "$file" > "$target_file"
-                rm "$file"
+                sed 's/^---/\n/g' "$source_fragment" >> "$file"
               fi
+
+            # Remove _base from extravars file name
+            new_file="${file%_base.yml}.yml"
+            mv "$file" "$new_file"
 
             done
           done
