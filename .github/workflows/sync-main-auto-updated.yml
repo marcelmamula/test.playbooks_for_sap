@@ -44,6 +44,9 @@ jobs:
 
       - name: Append shared vars to scenario vars
         run: |
+          # Install yq for yaml merging
+          sudo apt-get install -y yq
+
           # Loop through all scenarios
           for dir in deploy_scenarios/*; do
 
@@ -52,15 +55,13 @@ jobs:
               # Extract platform name
               platform=$(echo "$file" | sed 's/ansible_extravars_\(.*\)_base.yml/\1/')
               source_fragment="../../common_fragments/vars/platform_${platform}.yml"
+              target_file="${file%_base.yml}.yml"
 
               # Execute only when source platform vars fragment exists
               if [ -f "$source_fragment" ]; then
-                sed 's/^---/\n/g' "$source_fragment" >> "$file"
+                yq eval '. * load("'$source_fragment'")' "$file" > "$target_file"
+                rm "$file"
               fi
-
-            # Remove _base from extravars file name
-            new_file="${file%_base.yml}.yml"
-            mv "$file" "$new_file"
 
             done
           done
