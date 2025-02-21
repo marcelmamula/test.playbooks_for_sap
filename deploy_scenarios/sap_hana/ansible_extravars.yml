@@ -1,0 +1,53 @@
+---
+
+#### Mandatory scenario specific variables ####
+
+# Default Ansible Facts populate into default variables for all Ansible Roles
+sap_hostname: "{{ ansible_hostname }}"
+sap_domain: "{{ ansible_domain }}"
+sap_ip: "{{ ansible_default_ipv4.address }}"
+
+#### Mandatory parameters : Preconfigure OS for SAP Software ####
+sap_general_preconfigure_modify_etc_hosts: false
+sap_general_preconfigure_reboot_ok: true
+sap_general_preconfigure_fail_if_reboot_required: false
+sap_hana_preconfigure_reboot_ok: true # SAP HANA hosts will reboot twice if sap_general_preconfigure_reboot_ok is true
+sap_hana_preconfigure_fail_if_reboot_required: false
+sap_hana_preconfigure_update: true
+sap_hana_update_etchosts: true
+
+#### Dynamic assignment of SAP HANA variables ####
+sap_hana_sid: "{{ sap_system_hana_db_sid }}"
+sap_hana_install_instance_nr: "{{ sap_system_hana_db_instance_nr }}"
+
+#### Mandatory parameters : Ansible Dictionary for SAP Installation Media ####
+sap_software_hana_wildcard_list:
+  - 'SAPCAR*'
+  - 'IMDB_*'
+  - 'SAPHOSTAGENT*'
+
+sap_software_install_dictionary:
+
+  sap_hana_2_sps07:
+
+    softwarecenter_search_list_x86_64:
+      - 'SAPCAR_1115-70006178.EXE'
+      - 'IMDB_SERVER20_077_0-80002031.SAR'
+      - 'SAPHOSTAGENT62_62-80004822.SAR' # SAP Host Agent 7.22
+
+    softwarecenter_search_list_ppc64le:
+      - 'SAPCAR_1115-70006238.EXE'
+      - 'IMDB_SERVER20_077_0-80002046.SAR'
+      - 'SAPHOSTAGENT62_62-80004831.SAR' # SAP Host Agent 7.22
+
+  sap_hana_2_sps06:
+
+    softwarecenter_search_list_x86_64:
+      - 'SAPCAR_1115-70006178.EXE'
+      - 'IMDB_SERVER20_067_4-80002031.SAR'
+      - 'SAPHOSTAGENT61_61-80004822.SAR' # SAP Host Agent 7.22
+
+    softwarecenter_search_list_ppc64le:
+      - 'SAPCAR_1115-70006238.EXE'
+      - 'IMDB_SERVER20_067_4-80002046.SAR'
+      - 'SAPHOSTAGENT61_61-80004831.SAR' # SAP Host Agent 7.22

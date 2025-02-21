@@ -1,0 +1,50 @@
+---
+
+# Workflow for ansible-lint of the collection
+
+name: ansible-lint of all Ansible Playbooks for SAP
+
+on:
+  # Runs at 10:00 on every Monday
+  schedule:
+    - cron: '10 10 * * 1'
+
+  # Runs on push to dev and main branches
+  push:
+    branches:
+      - dev
+      - main
+
+  # Enable manual start button
+  workflow_dispatch:
+
+jobs:
+  ansible-lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+        with:
+          path: repo_playbooks
+
+      - name: Set up Python 3
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies for Python
+        run: |
+          pip3 install ansible==9.1.0
+          pip3 install ansible-compat==4.1.10
+          pip3 install ansible-core==2.16.2
+          pip3 install ansible-lint==6.22.1
+
+      - name: Install dependencies for Ansible
+        run: |
+          ansible-galaxy collection install \
+          -r ./repo_playbooks/vars/ansible_requirements.yml
+
+      - name: Run ansible-lint
+        working-directory: repo_playbooks
+        run: ansible-lint

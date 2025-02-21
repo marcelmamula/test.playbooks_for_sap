@@ -1,0 +1,173 @@
+---
+# Ansible Playbook for SAP S/4HANA Sandbox installation
+
+# Use include_role / include_tasks inside Ansible Task block, instead of using roles declaration or Task block with import_roles.
+# This ensures Ansible Roles, and the tasks within, will be parsed in sequence instead of parsing at Playbook initialization.
+
+
+#### Interactive Mode ####
+# Interactive mode section can be safely removed without impact if all mandatory variables are provided.
+- name: Ansible Play to Interactively gather all mandatory variables
+  hosts: localhost
+  gather_facts: false
+  pre_tasks:
+
+    - name: Check if interactive guide is available
+      ansible.builtin.stat:
+        path: ../../tasks/interactive_inputs.yml
+      register: __interactive_guide_availability
+      ignore_errors: true
+
+    - name: Playbook Interactive - Collection of interactive inputs
+      ansible.builtin.include_tasks:
+        file: ../../tasks/interactive_inputs.yml
+      vars:
+        interactive_input_type: s4hana
+      when:
+        - sap_vm_provision_iac_type is undefined or sap_vm_provision_iac_platform is undefined
+        - __interactive_guide_availability.stat.exists
+
+
+#### Begin Infrastructure-as-Code provisioning ####
+- name: Ansible Play to create dynamic inventory group for provisioning
+  hosts: localhost
+  gather_facts: false
+  tasks:
+
+    - name: Set fact __sap_host_dictionary
+      ansible.builtin.set_fact:
+        __sap_host_dictionary:
+          "{{ lookup('ansible.builtin.vars', 'sap_vm_provision_' + sap_vm_provision_iac_platform
+           + '_host_specifications_dictionary')[sap_vm_provision_host_specification_plan] }}"
+
+    - name: Create dynamic inventory group for Ansible Role sap_vm_provision
+      ansible.builtin.add_host:
+        name: "{{ item }}"
+        group: sap_vm_provision_target_inventory_group
+      loop: "{{ __sap_host_dictionary.keys() }}"
+      when: sap_vm_provision_iac_type in ['ansible', 'ansible_to_terraform']
+
+
+# Ansible Play target hosts pattern, use Inventory Group created by previous Ansible Task (add_host)
+- name: Ansible Play to provision hosts for SAP
+  hosts: sap_vm_provision_target_inventory_group
+  gather_facts: false
+  tasks:
+
+    # Ensure that all sap_* or __sap_* variables set in Interactive Mode are appended to the target inventory Group
+    - name: Assign all relevant facts from execution node to provisioned hosts
+      ansible.builtin.set_fact:
+        "{{ item.key }}": "{{ item.value }}"
+        cacheable: true
+      loop: "{{ hostvars['localhost'] | dict2items | selectattr('key', 'match', '^(__)?sap_') | list }}"
+      no_log: true
+
+    - name: Execute Ansible Role sap_vm_provision
+      ansible.builtin.include_role:
+        name: community.sap_infrastructure.sap_vm_provision
+      when: sap_vm_provision_iac_type in ['ansible', 'ansible_to_terraform']
+
+
+#### VM storage filesystem setup ####
+- name: Ansible Play for hosts storage setup
+  hosts: hana_primary
+  become: true
+  any_errors_fatal: true
+  max_fail_percentage: 0
+  tasks:
+
+    - name: Execute Ansible Role sap_storage_setup
+      ansible.builtin.include_role:
+        name: community.sap_install.sap_storage_setup
+      when:
+        - sap_vm_provision_iac_type in ['ansible', 'ansible_to_terraform', 'existing_hosts']
+
+
+#### Begin downloading SAP software installation media to hosts ####
+- name: Ansible Play for downloading of SAP Software installation media
+  hosts: hana_primary
+  become: true
+  any_errors_fatal: true
+  max_fail_percentage: 0
+  tasks:
+
+    - name: Prepare environment and download software
+      ansible.builtin.include_tasks:
+        file: ../../tasks/download_sap_media.yml
+      vars:
+        softwarecenter_search_list:
+          "{{ sap_software_install_dictionary[sap_software_product]
+            ['softwarecenter_search_list_' ~ ansible_architecture] }}"
+
+
+#### Begin SAP software hosts preparation ####
+- name: Ansible Play for preparing all SAP software hosts
+  hosts: hana_primary
+  become: true
+  any_errors_fatal: true
+  max_fail_percentage: 0
+  tasks:
+
+    - name: Execute Ansible Role sap_general_preconfigure
+      ansible.builtin.include_role:
+        name: community.sap_install.sap_general_preconfigure
+
+    - name: Execute Ansible Role sap_netweaver_preconfigure
+      ansible.builtin.include_role:
+        name: community.sap_install.sap_netweaver_preconfigure
+
+    - name: Execute Ansible Role sap_hana_preconfigure
+      ansible.builtin.include_role:
+        name: community.sap_install.sap_hana_preconfigure
+
+
+#### Begin SAP software installations ####
+- name: Ansible Play for SAP HANA Database Server installation
+  hosts: hana_primary
+  become: true
+  any_errors_fatal: true
+  max_fail_percentage: 0
+  tasks:
+
+    - name: Execute Ansible Role sap_install_media_detect
+      ansible.builtin.include_role:
+        name: community.sap_install.sap_install_media_detect
+      vars:
+        sap_install_media_detect_swpm: false
+        sap_install_media_detect_hostagent: true
+        sap_install_media_detect_igs: false
+        sap_install_media_detect_kernel: false
+        sap_install_media_detect_webdisp: false
+        sap_install_media_detect_db: "saphana"
+
+    # Install SAP HANA
+    - name: Execute Ansible Role sap_hana_install
+      ansible.builtin.include_role:
+        name: community.sap_install.sap_hana_install
+
+
+- name: Ansible Play for SAP NetWeaver Application Server installation - ABAP Central Services (ASCS), Database Load, Primary Application Server (PAS)
+  hosts: hana_primary
+  become: true
+  any_errors_fatal: true
+  max_fail_percentage: 0
+  tasks:
+
+    - name: Execute Ansible Role sap_install_media_detect
+      ansible.builtin.include_role:
+        name: community.sap_install.sap_install_media_detect
+      vars:
+        sap_install_media_detect_swpm: true
+        sap_install_media_detect_hostagent: true
+        sap_install_media_detect_igs: true
+        sap_install_media_detect_kernel: true
+        sap_install_media_detect_webdisp: false
+        sap_install_media_detect_db_client: "saphana"
+        sap_install_media_detect_export: "saps4hana"
+
+    # Install SAP S/4HANA via Ansible Role sap_swpm
+    - name: Execute Ansible Role sap_swpm
+      ansible.builtin.include_role:
+        name: community.sap_install.sap_swpm
+      vars:
+        sap_swpm_templates_product_input: "{{ sap_software_product }}"
