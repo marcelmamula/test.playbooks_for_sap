@@ -20,15 +20,15 @@ jobs:
       - name: Create or update publish branch
         run: |
           git fetch origin main
-          git fetch origin main-auto-updated
-
-          if git ls-remote --heads origin main-auto-updated; then
+          # Check if the branch exists remotely *before* attempting to fetch it.
+          if [[ $(git ls-remote --heads origin main-auto-updated) ]]; then
+            git fetch origin main-auto-updated
             git checkout main-auto-updated
             git reset --hard origin/main
           else
-            git checkout --orphan main-auto-updated # Create an orphan branch
-            git rm -rf. # Remove all files
-            git checkout main. # Copy files from main
+            git checkout --orphan main-auto-updated
+            git rm -rf .
+            git checkout main . # Use main . to copy all files
           fi
 
       - name: Copy shared files to scenarios
