@@ -54,7 +54,7 @@
 # interactive_input_type defines which type of inputs are gathered
 - name: Execute interactive type - HANA
   ansible.builtin.include_tasks:
-    file: "../../tasks/interactive_hana.yml"
+    file: "../../common_fragments/tasks/task_interactive_hana.yml"
   when: interactive_input_type is defined and interactive_input_type in __hana_types
   vars:
     __hana_types:
@@ -65,7 +65,7 @@
 
 - name: Execute interactive type - SWPM
   ansible.builtin.include_tasks:
-    file: "../../tasks/interactive_swpm.yml"
+    file: "../../common_fragments/tasks/task_interactive_swpm.yml"
   when: interactive_input_type is defined and interactive_input_type in __swpm_types
   vars:
     __swpm_types:
@@ -76,13 +76,13 @@
 # Interactive inputs for specific platform
 - name: Check that provided {{ sap_vm_provision_iac_platform }} has task file
   ansible.builtin.stat:
-    path: "../../tasks/interactive_{{ sap_vm_provision_iac_platform }}.yml"
+    path: "../../common_fragments/tasks/task_interactive_{{ sap_vm_provision_iac_platform }}.yml"
   register: __iac_platform_task_file
   ignore_errors: true
 
 - name: Interactive input - Trigger prompts for VM provisioning via {{ sap_vm_provision_iac_platform }}
   ansible.builtin.include_tasks:
-    file: "../../tasks/interactive_{{ sap_vm_provision_iac_platform }}.yml"
+    file: "../../common_fragments/tasks/task_interactive_{{ sap_vm_provision_iac_platform }}.yml"
   when: __iac_platform_task_file.stat.exists
 
 
