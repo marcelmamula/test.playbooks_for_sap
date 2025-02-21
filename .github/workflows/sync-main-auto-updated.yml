@@ -20,6 +20,7 @@ jobs:
           path: repo_playbooks
 
       - name: Create or update publish branch
+        working-directory: repo_playbooks
         run: |
           git fetch origin main
           # Check if the branch exists remotely *before* attempting to fetch it.
@@ -34,6 +35,7 @@ jobs:
           fi
 
       - name: Copy shared files to scenarios
+        working-directory: repo_playbooks
         run: |
           for dir in ./deploy_scenarios/*; do
             # Copy tasks and update paths
@@ -45,6 +47,7 @@ jobs:
           done
 
       - name: Append shared vars to scenario vars
+        working-directory: repo_playbooks
         run: |
           # Loop through all scenarios
           for dir in ./deploy_scenarios/*; do
@@ -71,6 +74,7 @@ jobs:
           rm -rf ./common_fragments
 
       - name: Check for changes
+        working-directory: repo_playbooks
         id: check_changes
         run: |
           git add .
@@ -81,6 +85,7 @@ jobs:
           fi
 
       - name: Commit changes
+        working-directory: repo_playbooks
         if: steps.check_changes.outputs.has_changes == 'true'
         run: |
           git config user.name github-actions
@@ -88,6 +93,7 @@ jobs:
           git commit -m "Prepare collection for release"
 
       - name: Push to publish branch
+        working-directory: repo_playbooks
         if: steps.check_changes.outputs.has_changes == 'true'
         run: |
           git push origin main-auto-updated --force-with-lease
