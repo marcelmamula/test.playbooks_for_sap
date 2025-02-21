@@ -73,7 +73,7 @@ jobs:
           done
 
           # Remove fragments after copying them
-          rm -rf ./common_fragments
+          git rm -rf ./common_fragments
 
       - name: Check for changes
         working-directory: repo_playbooks
