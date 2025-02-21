@@ -36,7 +36,7 @@ jobs:
           for dir in deploy_scenarios/*; do
             # Copy tasks and update paths
             cp ./common_fragments/tasks/*.yml $dir/optional/
-            sed -i 's/file: ..\/..\/common_fragments\/tasks\//file: optional\//' $dir/ansible_playbook.yml
+            sed -i 's/..\/..\/common_fragments\/tasks\//optional\//' $dir/ansible_playbook.yml
 
             # Copy ansible_requirements
             cp ./common_fragments/vars/ansible_requirements.yml $dir/
@@ -44,15 +44,29 @@ jobs:
 
       - name: Append shared vars to scenario vars
         run: |
+          # Loop through all scenarios
           for dir in deploy_scenarios/*; do
+
+            # Loop through all valid extravars files
             for file in "$dir"/ansible_extravars_*_base.yml; do
+              # Extract platform name
               platform=$(echo "$file" | sed 's/ansible_extravars_\(.*\)_base.yml/\1/')
               source_fragment="../../common_fragments/vars/platform_${platform}.yml"
+
+              # Execute only when source platform vars fragment exists
               if [ -f "$source_fragment" ]; then
                 sed 's/^---/\n/g' "$source_fragment" >> "$file"
               fi
+
+            # Remove _base from extravars file name
+            new_file="${file%_base.yml}.yml"
+            mv "$file" "$new_file"
+
             done
           done
+
+          # Remove fragments after copying them
+          rm -rf ./common_fragments
 
       - name: Check for changes
         id: check_changes
