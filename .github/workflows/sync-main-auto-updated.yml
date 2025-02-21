@@ -51,16 +51,17 @@ jobs:
         run: |
           # Loop through all scenarios
           for dir in ./deploy_scenarios/*; do
+            ls -la $dir/
 
             # Loop through all valid extravars files
             for file in "$dir"/ansible_extravars_*_base.yml; do
               # Extract platform name
               platform=$(echo "$file" | sed 's/ansible_extravars_\(.*\)_base.yml/\1/')
               source_fragment="$GITHUB_WORKSPACE/repo_playbooks/common_fragments/vars/platform_${platform}.yml"
+              ls -la "$source_fragment"
 
               # Execute only when source platform vars fragment exists
               if [ -f "$source_fragment" ]; then
-                ls -la "$source_fragment"
                 sed 's/^---/\n/g' "$source_fragment" >> "$file"
               fi
 
