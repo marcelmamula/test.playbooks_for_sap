@@ -55,12 +55,10 @@ jobs:
 
             # Loop through all valid extravars files
             for file in "$dir"/ansible_extravars_*_base.yml; do
-              # Extract platform name
+              # Extract platform name using basename of file
               basefile=$(basename "$file")
               platform=$(echo "$basefile" | sed 's/ansible_extravars_\(.*\)_base\.yml/\1/')
-              echo "$platform"
               source_fragment="common_fragments/vars/platform_${platform}.yml"
-              ls -la "$source_fragment"
 
               # Execute only when source platform vars fragment exists
               if [ -f "$source_fragment" ]; then
