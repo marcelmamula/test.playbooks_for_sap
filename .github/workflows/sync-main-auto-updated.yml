@@ -56,7 +56,8 @@ jobs:
             # Loop through all valid extravars files
             for file in "$dir"/ansible_extravars_*_base.yml; do
               # Extract platform name
-              platform=$(echo "$file" | sed 's/ansible_extravars_\(.*\)_base.yml/\1/')
+              basefile=$(basename "$file")
+              platform=$(echo "$basefile" | sed 's/ansible_extravars_\(.*\)_base\.yml/\1/')
               echo "$platform"
               source_fragment="common_fragments/vars/platform_${platform}.yml"
               ls -la "$source_fragment"
