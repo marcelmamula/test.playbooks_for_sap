@@ -1,0 +1,251 @@
+---
+# Ansible Playbook for SAP HANA Scale-Up (Performance Optimized)
+
+# Use include_role / include_tasks inside Ansible Task block, instead of using roles declaration or Task block with import_roles.
+# This ensures Ansible Roles, and the tasks within, will be parsed in sequence instead of parsing at Playbook initialization.
+
+
+#### Interactive Mode ####
+# Interactive mode section can be safely removed without impact if all mandatory variables are provided.
+- name: Ansible Play to Interactively gather all mandatory variables
+  hosts: localhost
+  gather_facts: false
+  pre_tasks:
+
+    - name: Check if interactive guide is available
+      ansible.builtin.stat:
+        path: ../../common_fragments/tasks/interactive_inputs.yml
+      register: __interactive_guide_availability
+      ignore_errors: true
+
+    - name: Playbook Interactive - Collection of interactive inputs
+      ansible.builtin.include_tasks:
+        file: ../../common_fragments/tasks/interactive_inputs.yml
+      vars:
+        interactive_input_type: hana_ha
+      when:
+        - sap_vm_provision_iac_type is undefined or sap_vm_provision_iac_platform is undefined
+        - __interactive_guide_availability.stat.exists
+
+
+#### Begin Infrastructure-as-Code provisioning ####
+- name: Ansible Play to create dynamic inventory group for provisioning
+  hosts: localhost
+  gather_facts: false
+  tasks:
+
+    - name: Set fact __sap_host_dictionary
+      ansible.builtin.set_fact:
+        __sap_host_dictionary:
+          "{{ lookup('ansible.builtin.vars', 'sap_vm_provision_' + sap_vm_provision_iac_platform
+           + '_host_specifications_dictionary')[sap_vm_provision_host_specification_plan] }}"
+
+    - name: Create dynamic inventory group for Ansible Role sap_vm_provision
+      ansible.builtin.add_host:
+        name: "{{ item }}"
+        group: sap_vm_provision_target_inventory_group
+      loop: "{{ __sap_host_dictionary.keys() }}"
+      when: sap_vm_provision_iac_type in ['ansible', 'ansible_to_terraform']
+
+
+# Ansible Play target hosts pattern, use Inventory Group created by previous Ansible Task (add_host)
+- name: Ansible Play to provision hosts for SAP
+  hosts: sap_vm_provision_target_inventory_group
+  gather_facts: false
+  tasks:
+
+    # Ensure that all sap_* or __sap_* variables set in Interactive Mode are appended to the target inventory Group
+    - name: Assign all relevant facts from execution node to provisioned hosts
+      ansible.builtin.set_fact:
+        "{{ item.key }}": "{{ item.value }}"
+        cacheable: true
+      loop: "{{ hostvars['localhost'] | dict2items | selectattr('key', 'match', '^(__)?sap_') | list }}"
+      no_log: true
+
+    - name: Execute Ansible Role sap_vm_provision
+      ansible.builtin.include_role:
+        name: community.sap_infrastructure.sap_vm_provision
+      when: sap_vm_provision_iac_type in ['ansible', 'ansible_to_terraform']
+
+
+#### VM storage filesystem setup ####
+- name: Ansible Play for hosts storage setup
+  hosts: hana_primary, hana_secondary
+  become: true
+  any_errors_fatal: true
+  max_fail_percentage: 0
+  tasks:
+
+    - name: Execute Ansible Role sap_vm_temp_vip
+      ansible.builtin.include_role:
+        name: community.sap_infrastructure.sap_vm_temp_vip
+
+    - name: Execute Ansible Role sap_storage_setup
+      ansible.builtin.include_role:
+        name: community.sap_install.sap_storage_setup
+      when:
+        - sap_vm_provision_iac_type in ['ansible', 'ansible_to_terraform', 'existing_hosts']
+
+    - name: Install rsync for copying of SAP Software installation media
+      ansible.builtin.package:
+        name:
+          - rsync
+        state: present
+
+
+#### Begin downloading SAP software installation media to hosts ####
+- name: Ansible Play for downloading of SAP Software installation media
+  hosts: hana_primary
+  become: true
+  any_errors_fatal: true
+  max_fail_percentage: 0
+  tasks:
+
+    - name: Prepare environment and download software
+      ansible.builtin.include_tasks:
+        file: ../../common_fragments/tasks/download_sap_media.yml
+      vars:
+        softwarecenter_search_list:
+          "{{ sap_software_install_dictionary[sap_software_product]
+            ['softwarecenter_search_list_' ~ ansible_architecture] }}"
+
+
+- name: Ansible Play for copying SAP HANA Database Server installation media to other hosts
+  hosts: hana_secondary
+  become: true
+  any_errors_fatal: true
+  max_fail_percentage: 0
+  tasks:
+
+    - name: Transfer SAP HANA installation media to SAP HANA Primary and SAP HANA Secondary
+      delegate_to: "{{ hostvars[groups['hana_primary'][0]].ansible_default_ipv4.address }}"
+      remote_user: "root"
+      ansible.posix.synchronize:
+        src: "{{ item }}"
+        dest: "{{ sap_install_media_detect_source_directory }}"
+        mode: "push"
+        dest_port: 22
+        use_ssh_args: false
+        verify_host: false
+        private_key: "/tmp/hosts_rsa"
+#        set_remote_user: false
+      loop: "{{ hostvars[groups['hana_primary'][0]]['sap_hana_install_media_files'].files | map(attribute='path') | list }}"
+
+
+- name: Ansible Play to remove temporary files from SAP HANA primary host
+  hosts: hana_primary
+  become: true
+  any_errors_fatal: true
+  max_fail_percentage: 0
+  tasks:
+
+    - name: Remove temporary file, if it exists
+      ansible.builtin.file:
+        path: "/tmp/hosts_rsa"
+        state: absent
+
+
+#### Begin SAP software hosts preparation ####
+- name: Ansible Play for preparing all SAP software hosts
+  hosts: hana_primary, hana_secondary
+  become: true
+  any_errors_fatal: true
+  max_fail_percentage: 0
+  tasks:
+
+    - name: Execute Ansible Role sap_general_preconfigure
+      ansible.builtin.include_role:
+        name: community.sap_install.sap_general_preconfigure
+
+    - name: Execute Ansible Role sap_hana_preconfigure
+      ansible.builtin.include_role:
+        name: community.sap_install.sap_hana_preconfigure
+
+
+- name: Ansible Play for appending temporary Virtual IP (VIP) after pre-configuration and reboot of hosts
+  hosts: hana_primary, hana_secondary
+  become: true
+  any_errors_fatal: true
+  max_fail_percentage: 0
+  tasks:
+
+    - name: Execute Ansible Role sap_vm_temp_vip
+      ansible.builtin.include_role:
+        name: community.sap_infrastructure.sap_vm_temp_vip
+
+
+#### Begin SAP software installations ####
+- name: Ansible Play for SAP HANA Database Server installation
+  hosts: hana_primary, hana_secondary
+  become: true
+  any_errors_fatal: true
+  max_fail_percentage: 0
+  tasks:
+
+    - name: Execute Ansible Role sap_install_media_detect
+      ansible.builtin.include_role:
+        name: community.sap_install.sap_install_media_detect
+      vars:
+        sap_install_media_detect_swpm: false
+        sap_install_media_detect_hostagent: true
+        sap_install_media_detect_igs: false
+        sap_install_media_detect_kernel: false
+        sap_install_media_detect_webdisp: false
+        sap_install_media_detect_db: "saphana"
+
+    # Install SAP HANA
+    - name: Execute Ansible Role sap_hana_install
+      ansible.builtin.include_role:
+        name: community.sap_install.sap_hana_install
+
+    # Set variable for all nodes in the SAP HANA scale-up HA cluster configuration
+    # Use definition of Virtual IP (VIP) and variables from Ansible Inventory groups
+    - name: Set Ansible Variable shared by sap_ha_install_hana_hsr and sap_ha_pacemaker_cluster for SAP HANA scale-up HA cluster configuration
+      ansible.builtin.set_fact:
+        sap_hana_cluster_nodes:
+          - node_name: "{{ hostvars[groups['hana_primary'][0]].ansible_hostname }}"
+            node_ip: "{{ hostvars[groups['hana_primary'][0]].ansible_host }}"
+            node_role: primary
+            hana_site: DC01
+          - node_name: "{{ hostvars[groups['hana_secondary'][0]].ansible_hostname }}"
+            node_ip: "{{ hostvars[groups['hana_secondary'][0]].ansible_host }}"
+            node_role: secondary
+            hana_site: DC02
+      # Not required to provide IP Addresses, but can define with:
+      # "{{ hostvars[hostvars[ansible_host].groups.hana_primary[0]].ansible_default_ipv4.address }}"
+      # "{{ hostvars[hostvars[ansible_host].groups.hana_secondary[0]].ansible_default_ipv4.address }}"
+
+    # Execute setup of SAP HANA System Replication (HSR) with 2 nodes
+    - name: Execute Ansible Role sap_ha_install_hana_hsr
+      ansible.builtin.include_role:
+        name: community.sap_install.sap_ha_install_hana_hsr
+      vars:
+        sap_ha_install_hana_hsr_cluster_nodes: "{{ sap_hana_cluster_nodes }}"
+
+    # Execute setup of SAP HANA scale-up HA cluster
+    - name: Execute Ansible Role sap_ha_pacemaker_cluster
+      ansible.builtin.include_role:
+        name: community.sap_install.sap_ha_pacemaker_cluster
+      vars:
+        sap_ha_pacemaker_cluster_cluster_name: "{{ sap_system_hana_cluster_name }}"
+        sap_ha_pacemaker_cluster_hacluster_user_password: "{{ sap_system_hana_hacluster_user_password }}"
+        sap_ha_pacemaker_cluster_host_type:
+          - hana_scaleup_perf
+        sap_ha_pacemaker_cluster_hana_sid: "{{ sap_system_hana_db_sid }}"
+        sap_ha_pacemaker_cluster_hana_instance_nr: "{{ sap_system_hana_db_instance_nr }}"
+        sap_ha_pacemaker_cluster_cluster_nodes: "{{ sap_hana_cluster_nodes }}"
+        sap_ha_pacemaker_cluster_vip_resource_group_name: viphdb
+
+
+#### Post-install alterations for Infrastructure Platform ####
+- name: "Ansible Play for Post-install alterations for Infrastructure Platform"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+
+    - name: Execute Ansible Role sap_vm_provision
+      ansible.builtin.include_role:
+        name: community.sap_infrastructure.sap_vm_provision
+      vars:
+        sap_vm_provision_iac_post_deployment: true
+      when: sap_vm_provision_iac_type == "ansible"
