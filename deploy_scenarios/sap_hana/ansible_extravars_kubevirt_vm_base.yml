@@ -1,8 +1,10 @@
 ---
-# Infrastructure provisioning definitions
-
 # EXPERIMENTAL
 
+# Infrastructure provisioning definitions
+sap_vm_provision_iac_platform: "kubevirt_vm"
+
+#### Mandatory parameters : Ansible Dictionary for host specifications ####
 sap_vm_provision_kubevirt_vm_host_specifications_dictionary:
 
   tiny_64gb:

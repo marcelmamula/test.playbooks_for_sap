@@ -1,6 +1,8 @@
 ---
 # Infrastructure provisioning definitions
+sap_vm_provision_iac_platform: "ovirt_vm"
 
+#### Mandatory parameters : Ansible Dictionary for host specifications ####
 sap_vm_provision_ovirt_vm_host_specifications_dictionary:
 
   xsmall_256gb:

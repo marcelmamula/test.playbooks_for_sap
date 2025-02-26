@@ -1,31 +1,31 @@
 ---
 #### Bastion server details ####
-# sap_vm_provision_bastion_user: "ENTER_STRING_VALUE_HERE"
-# sap_vm_provision_bastion_ssh_port: "ENTER_STRING_VALUE_HERE"
+sap_vm_provision_bastion_user: "ENTER_STRING_VALUE_HERE"
+sap_vm_provision_bastion_ssh_port: "ENTER_STRING_VALUE_HERE"
 
 # Variables required for sap_vm_provision_iac_type=ansible
-# sap_vm_provision_bastion_public_ip: "ENTER_STRING_VALUE_HERE"
-# sap_vm_provision_ssh_bastion_private_key_file_path: "ENTER_STRING_VALUE_HERE"
-# sap_vm_provision_ssh_host_private_key_file_path: "ENTER_STRING_VALUE_HERE"
-# sap_vm_provision_ssh_host_public_key_file_path: "ENTER_STRING_VALUE_HERE"
+sap_vm_provision_bastion_public_ip: "ENTER_STRING_VALUE_HERE"
+sap_vm_provision_ssh_bastion_private_key_file_path: "ENTER_STRING_VALUE_HERE"
+sap_vm_provision_ssh_host_private_key_file_path: "ENTER_STRING_VALUE_HERE"
+sap_vm_provision_ssh_host_public_key_file_path: "ENTER_STRING_VALUE_HERE"
 
 #### Infrastructure platform variables ####
-# sap_vm_provision_ovirt_engine_insecure_bool: true
-# sap_vm_provision_ovirt_engine_url: "ENTER_STRING_VALUE_HERE"
-# sap_vm_provision_ovirt_engine_fqdn: "ENTER_STRING_VALUE_HERE"
-# sap_vm_provision_ovirt_engine_user: "ENTER_STRING_VALUE_HERE"
-# sap_vm_provision_ovirt_engine_password: "ENTER_STRING_VALUE_HERE"
-# sap_vm_provision_ovirt_engine_cafile: "ENTER_STRING_VALUE_HERE"
+sap_vm_provision_ovirt_engine_insecure_bool: true
+sap_vm_provision_ovirt_engine_url: "ENTER_STRING_VALUE_HERE"
+sap_vm_provision_ovirt_engine_fqdn: "ENTER_STRING_VALUE_HERE"
+sap_vm_provision_ovirt_engine_user: "ENTER_STRING_VALUE_HERE"
+sap_vm_provision_ovirt_engine_password: "ENTER_STRING_VALUE_HERE"
+sap_vm_provision_ovirt_engine_cafile: "ENTER_STRING_VALUE_HERE"
 
-# sap_vm_provision_ovirt_hypervisor_cluster_name: "ENTER_STRING_VALUE_HERE"
-# sap_vm_provision_ovirt_hypervisor_cluster_host_node_name: "ENTER_STRING_VALUE_HERE"
-# sap_vm_provision_ovirt_hypervisor_cluster_storage_domain_name: "ENTER_STRING_VALUE_HERE"
+sap_vm_provision_ovirt_hypervisor_cluster_name: "ENTER_STRING_VALUE_HERE"
+sap_vm_provision_ovirt_hypervisor_cluster_host_node_name: "ENTER_STRING_VALUE_HERE"
+sap_vm_provision_ovirt_hypervisor_cluster_storage_domain_name: "ENTER_STRING_VALUE_HERE"
 
-# sap_vm_provision_ovirt_vm_boot_menu: false
-# sap_vm_provision_ovirt_vm_clone_independent: false
-# sap_vm_provision_ovirt_vm_disk_type: "raw" # default is 'cow' = thin provisioning
-# sap_vm_provision_ovirt_vm_timezone: "Etc/GMT"
-# sap_vm_provision_ovirt_vm_operating_system: "other_linux"
+sap_vm_provision_ovirt_vm_boot_menu: false
+sap_vm_provision_ovirt_vm_clone_independent: false
+sap_vm_provision_ovirt_vm_disk_type: "raw" # default is 'cow' = thin provisioning
+sap_vm_provision_ovirt_vm_timezone: "Etc/GMT"
+sap_vm_provision_ovirt_vm_operating_system: "other_linux"
 
 # OVirt VM option 1 - create from VM Template Name
 sap_vm_provision_ovirt_vm_template_name: "ENTER_STRING_VALUE_HERE"
