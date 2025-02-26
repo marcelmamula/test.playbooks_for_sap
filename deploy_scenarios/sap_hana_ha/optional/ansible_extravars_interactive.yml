@@ -1,0 +1,76 @@
+---
+
+#### Mandatory scenario specific variables ####
+
+# Default Ansible Facts populate into default variables for all Ansible Roles
+sap_hostname: "{{ ansible_hostname }}"
+sap_domain: "{{ ansible_domain }}"
+sap_ip: "{{ ansible_default_ipv4.address }}"
+
+#### Mandatory parameters : Virtual instance names ####
+# See virtual hostname information in SAP Note 2279110 and 962955
+# Ensure this does not contain the local hostname, must use the Virtual Hostname for use with the Virtual IP (VIP)
+# sap_swpm_virtual_hostname: "{{ sap_vm_provision_dynamic_inventory_nw_ascs_hostname }}-ha"
+sap_swpm_db_host: "{{ sap_vm_provision_dynamic_inventory_hana_primary_hostname }}-ha" # Must be SAP HANA Virtual Hostname
+
+#### Mandatory parameters : Preconfigure OS for SAP Software ####
+sap_general_preconfigure_modify_etc_hosts: false
+sap_general_preconfigure_reboot_ok: true
+sap_general_preconfigure_fail_if_reboot_required: false
+sap_hana_preconfigure_reboot_ok: true # SAP HANA hosts will reboot twice if sap_general_preconfigure_reboot_ok is true
+sap_hana_preconfigure_fail_if_reboot_required: false
+sap_hana_preconfigure_update: true
+sap_hana_update_etchosts: true
+
+#### Dynamic assignment of SAP HANA variables ####
+sap_hana_sid: "{{ sap_system_hana_db_sid }}"
+sap_hana_install_instance_nr: "{{ sap_system_hana_db_instance_nr }}"
+
+#### Dynamic assignment of SAP HANA System Replication (HSR) variables ####
+sap_ha_install_hana_hsr_sid: "{{ sap_system_hana_db_sid }}"
+sap_ha_install_hana_hsr_instance_number: "{{ sap_system_hana_db_instance_nr }}"
+sap_ha_install_hana_hsr_db_system_password: "{{ sap_hana_install_db_system_password
+  if (sap_hana_install_use_master_password is defined and sap_hana_install_use_master_password == 'n'
+    and sap_hana_install_db_system_password)
+  else sap_hana_install_master_password }}"
+
+#### Dynamic assignment for Virtual IP ####
+sap_vm_temp_vip_hana_primary: "{{ sap_vm_provision_ha_vip_hana_primary }}"
+sap_ha_pacemaker_cluster_vip_hana_primary_ip_address: "{{ sap_vm_provision_ha_vip_hana_primary }}"
+
+#### Mandatory parameters : Ansible Dictionary for SAP Installation Media ####
+sap_software_hana_wildcard_list:
+  - 'SAPCAR*'
+  - 'IMDB_*'
+  - 'SAPHOSTAGENT*'
+
+sap_software_install_dictionary:
+
+  sap_hana_2_sps07:
+
+    softwarecenter_search_list_x86_64:
+      - 'SAPCAR_1115-70006178.EXE'
+      - 'IMDB_SERVER20_077_0-80002031.SAR'
+      - 'SAPHOSTAGENT62_62-80004822.SAR' # SAP Host Agent 7.22
+
+    softwarecenter_search_list_ppc64le:
+      - 'SAPCAR_1115-70006238.EXE'
+      - 'IMDB_SERVER20_077_0-80002046.SAR'
+      - 'SAPHOSTAGENT62_62-80004831.SAR' # SAP Host Agent 7.22
+
+  sap_hana_2_sps06:
+
+    softwarecenter_search_list_x86_64:
+      - 'SAPCAR_1115-70006178.EXE'
+      - 'IMDB_SERVER20_067_4-80002031.SAR'
+      - 'SAPHOSTAGENT61_61-80004822.SAR' # SAP Host Agent 7.22
+
+    softwarecenter_search_list_ppc64le:
+      - 'SAPCAR_1115-70006238.EXE'
+      - 'IMDB_SERVER20_067_4-80002046.SAR'
+      - 'SAPHOSTAGENT61_61-80004831.SAR' # SAP Host Agent 7.22
+
+#### Dynamic parameters for AWS ####
+# Override of AWS IAM HA roles is required if 'HA-Role-Pacemaker' already exists
+sap_vm_provision_aws_ha_iam_role: "HA-Role-Pacemaker-{{ sap_system_hana_db_sid }}"
+sap_vm_provision_aws_ha_iam_instance_profile: "HA-Role-Pacemaker-{{ sap_system_hana_db_sid }}-profile"

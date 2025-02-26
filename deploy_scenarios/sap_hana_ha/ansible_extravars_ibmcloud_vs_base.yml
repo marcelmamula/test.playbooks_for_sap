@@ -1,5 +1,6 @@
 ---
-#### Infrastructure specific variables ####
+# Infrastructure provisioning definitions
+sap_vm_provision_iac_platform: "ibmcloud_vs"
 
 ## Linux Pacemaker cluster setup variables - IBM Hypervisor
 # IBM Power Hardware Management Console (HMC), not to be confused with IBM PowerVC host and credentials
@@ -9,7 +10,7 @@ sap_ha_pacemaker_cluster_ibmpower_vm_hmc_host_login: "ENTER_STRING_VALUE_HERE"
 sap_ha_pacemaker_cluster_ibmpower_vm_hmc_host_login_password: "ENTER_STRING_VALUE_HERE"
 sap_ha_pacemaker_cluster_ibmpower_vm_hmc_host_version: "4"
 
-## Infrastructure provisioning definition
+#### Mandatory parameters : Ansible Dictionary for host specifications ####
 sap_vm_provision_ibmcloud_vs_host_specifications_dictionary:
 
   xsmall_256gb:

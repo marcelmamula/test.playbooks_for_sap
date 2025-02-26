@@ -1,11 +1,12 @@
 ---
-#### Infrastructure specific variables ####
+# Infrastructure provisioning definitions
+sap_vm_provision_iac_platform: "msazure_vm"
 
 ## Linux Pacemaker cluster setup variables
 sap_ha_pacemaker_cluster_msazure_subscription_id: "{{ sap_vm_provision_msazure_subscription_id | d('') }}"
 sap_ha_pacemaker_cluster_msazure_resource_group: "{{ sap_vm_provision_msazure_resource_group_name | d('') }}"
 
-## Infrastructure provisioning definition
+#### Mandatory parameters : Ansible Dictionary for host specifications ####
 sap_vm_provision_msazure_vm_host_specifications_dictionary:
 
   xsmall_256gb:

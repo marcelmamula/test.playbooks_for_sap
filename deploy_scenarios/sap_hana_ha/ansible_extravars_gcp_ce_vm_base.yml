@@ -1,11 +1,12 @@
 ---
-#### Infrastructure specific variables ####
+# Infrastructure provisioning definitions
+sap_vm_provision_iac_platform: "gcp_ce_vm"
 
 ## Linux Pacemaker cluster setup variables
 sap_ha_pacemaker_cluster_gcp_project: "{{ sap_vm_provision_gcp_project | d('') }}"
 sap_ha_pacemaker_cluster_gcp_region_zone: "{{ sap_vm_provision_gcp_region_zone | d('') }}"
 
-## Infrastructure provisioning definition
+#### Mandatory parameters : Ansible Dictionary for host specifications ####
 sap_vm_provision_gcp_ce_vm_host_specifications_dictionary:
 
   xsmall_256gb:

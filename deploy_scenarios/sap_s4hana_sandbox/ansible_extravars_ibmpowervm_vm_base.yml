@@ -1,7 +1,8 @@
 ---
-#### Infrastructure specific variables ####
+# Infrastructure provisioning definitions
+sap_vm_provision_iac_platform: "ibmpowervm_vm"
 
-## Infrastructure provisioning definition
+#### Mandatory parameters : Ansible Dictionary for host specifications ####
 sap_vm_provision_ibmpowervm_vm_host_specifications_dictionary:
 
   xsmall_256gb:
