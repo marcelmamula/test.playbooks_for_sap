@@ -1,4 +1,8 @@
 ---
+#### Instructions for Interactive Prompts ####
+# Variables are omitted from this file, so that an end-user execution will prompt
+# for input and the input will not be overwritten by Ansible's precedence for variables.
+# Adding variables into this file will result in skipped interactive prompt.
 
 #### Mandatory scenario specific variables ####
 
