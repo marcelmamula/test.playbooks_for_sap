@@ -15,13 +15,14 @@ sap_vm_provision_aws_secret_access_key: "ENTER_STRING_VALUE_HERE"
 sap_vm_provision_aws_region: "{{ sap_vm_provision_aws_vpc_availability_zone[:-1] }}"
 sap_vm_provision_aws_vpc_availability_zone: "ENTER_STRING_VALUE_HERE"
 sap_vm_provision_aws_vpc_subnet_create_boolean:
-  "{{ true | default(false) if aws_vpc_subnet_id == 'new' else false }}"
+  "{{ true | default(false) if sap_vm_provision_aws_vpc_subnet_id == 'new' else false }}"
 sap_vm_provision_aws_vpc_subnet_id: "ENTER_STRING_VALUE_HERE" # if ansible_to_terraform, use "new"
 sap_vm_provision_aws_ec2_vs_host_os_image: "ENTER_STRING_VALUE_HERE"
 
 # Variables required for sap_vm_provision_iac_type=ansible
 sap_vm_provision_aws_key_pair_name_ssh_host_public_key: "ENTER_STRING_VALUE_HERE"
 sap_vm_provision_aws_vpc_sg_names: "ENTER_STRING_VALUE_HERE"
+# sap_vm_provision_aws_dns_overwrite: 'true'  # enable to allow overwrite of existing DNS entries
 
 # Variables required for sap_vm_provision_iac_type=ansible_to_terraform
 # sap_vm_provision_terraform_state: "ENTER_STRING_VALUE_HERE" # present, absent

@@ -24,11 +24,6 @@ sap_software_product: "ENTER_STRING_VALUE_HERE" # sap_hana_2_sps07_install , sap
 
 #### Mandatory scenario specific variables ####
 
-# Default Ansible Facts populate into default variables for all Ansible Roles
-sap_hostname: "{{ ansible_hostname }}"
-sap_domain: "{{ ansible_domain }}"
-sap_ip: "{{ ansible_default_ipv4.address }}"
-
 #### Mandatory parameters : Preconfigure OS for SAP Software ####
 sap_general_preconfigure_modify_etc_hosts: false
 sap_general_preconfigure_reboot_ok: true
@@ -96,3 +91,8 @@ sap_software_install_dictionary:
 # sap_hana_install_system_restart: 'n'  # select if role should start SAP HANA after each system boot
 ## Pass some extra arguments to the hdblcm cli, e.g.  --ignore=<check1>[,<check2>]...
 # sap_hana_install_hdblcm_extraargs:
+
+# Default Ansible Facts populate into default variables for all Ansible Roles
+sap_hostname: "{{ ansible_hostname }}"
+sap_domain: "{{ ansible_domain }}"
+sap_ip: "{{ ansible_default_ipv4.address }}"

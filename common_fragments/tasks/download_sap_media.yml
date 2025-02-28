@@ -7,22 +7,6 @@
 
 # Set Python version for sap_launchpad role execution
 # You can replace auto-detection jinja2 directly by string value.
-- name: Check availability of sap_launchpad collection on execution node
-  delegate_to: localhost
-  ansible.builtin.command:
-    cmd: ansible-galaxy collection list
-  register: collection_list_output
-
-- name: Inform if sap_launchpad collection is not present on execution node
-  ansible.builtin.debug:
-    msg: |
-      Collection community.sap_launchpad was not detected!
-      Download of SAP Software Installation Media will not be executed with sap_launchpad,
-      but pre-downloaded software can be mounted as NFS in host dictionary.
-  when:
-    - not collection_list_output.stdout_lines | select('search', 'community.sap_launchpad')
-
-
 - name: Block for preparation of environment for sap_launchpad
   when: collection_list_output.stdout_lines | select('search', 'community.sap_launchpad')
   block:

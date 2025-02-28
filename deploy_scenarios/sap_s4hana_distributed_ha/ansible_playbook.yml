@@ -55,17 +55,31 @@
   tasks:
 
     # Ensure that all sap_* or __sap_* variables set in Interactive Mode are appended to the target inventory Group
-    - name: Assign all relevant facts from execution node to provisioned hosts
+    - name: Assign all relevant facts from execution node before provisioning
       ansible.builtin.set_fact:
         "{{ item.key }}": "{{ item.value }}"
         cacheable: true
       loop: "{{ hostvars['localhost'] | dict2items | selectattr('key', 'match', '^(__)?sap_') | list }}"
       no_log: true
+      ignore_errors: true
 
     - name: Execute Ansible Role sap_vm_provision
       ansible.builtin.include_role:
         name: community.sap_infrastructure.sap_vm_provision
       when: sap_vm_provision_iac_type in ['ansible', 'ansible_to_terraform']
+
+- name: Ansible Play to set sap variables on provisioned hosts
+  hosts: sap_vm_provision_target_inventory_group
+  gather_facts: false
+  tasks:
+
+    - name: Assign all relevant facts from execution node after provisioning
+      ansible.builtin.set_fact:
+        "{{ item.key }}": "{{ item.value }}"
+        cacheable: true
+      loop: "{{ hostvars['localhost'] | dict2items | selectattr('key', 'match', '^(__)?sap_') | list }}"
+      no_log: true
+      ignore_errors: true
 
 
 #### VM storage filesystem setup ####
@@ -110,9 +124,25 @@
   max_fail_percentage: 0
   tasks:
 
+    - name: Check availability of sap_launchpad collection on execution node
+      delegate_to: localhost
+      ansible.builtin.command:
+        cmd: ansible-galaxy collection list
+      register: __collection_list_output
+
+    - name: Inform if sap_launchpad collection is not present on execution node
+      ansible.builtin.debug:
+        msg: |
+          Collection community.sap_launchpad was not detected!
+          Download of SAP Software Installation Media will not be executed with sap_launchpad,
+          but pre-downloaded software can be mounted as NFS in host dictionary.
+      when:
+        - not __collection_list_output.stdout_lines | select('search', 'community.sap_launchpad')
+
     - name: Prepare environment and download software
       ansible.builtin.include_tasks:
         file: ../../common_fragments/tasks/download_sap_media.yml
+      when: __collection_list_output.stdout_lines | select('search', 'community.sap_launchpad')
       vars:
         softwarecenter_search_list:
           "{{ sap_software_install_dictionary[sap_software_product]
