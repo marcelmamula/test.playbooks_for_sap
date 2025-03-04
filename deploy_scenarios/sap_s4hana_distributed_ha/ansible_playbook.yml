@@ -73,7 +73,7 @@
   gather_facts: false
   tasks:
 
-    - name: Assign all relevant facts from execution node after provisioning
+    - name: Assign all relevant facts from execution node after provisioning  # noqa: ignore-errors
       ansible.builtin.set_fact:
         "{{ item.key }}": "{{ item.value }}"
         cacheable: true
