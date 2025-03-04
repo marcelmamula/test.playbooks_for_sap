@@ -130,7 +130,7 @@
       ansible.builtin.fail:
         msg: |
           Value '{{ sap_vm_provision_host_specification_plan }}' is invalid.
-          Available options: {{ sap_vm_provision_aws_ec2_vs_host_specifications_dictionary.keys() }} 
+          Available options: {{ sap_vm_provision_aws_ec2_vs_host_specifications_dictionary.keys() }}
       when:
         - sap_vm_provision_host_specification_plan_register.user_input is defined
         - sap_vm_provision_host_specification_plan not in sap_vm_provision_aws_ec2_vs_host_specifications_dictionary.keys()
@@ -161,7 +161,7 @@
       ansible.builtin.fail:
         msg: |
           Value '{{ sap_vm_provision_aws_ec2_vs_host_os_image }}' is invalid.
-          Available options: {{ sap_vm_provision_aws_ec2_vs_host_os_image_dictionary.keys() }} 
+          Available options: {{ sap_vm_provision_aws_ec2_vs_host_os_image_dictionary.keys() }}
       when:
         - sap_vm_provision_aws_ec2_vs_host_os_image_register.user_input is defined
         - sap_vm_provision_aws_ec2_vs_host_os_image not in sap_vm_provision_aws_ec2_vs_host_os_image_dictionary.keys()

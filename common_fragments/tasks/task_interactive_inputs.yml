@@ -87,7 +87,7 @@
       ansible.builtin.fail:
         msg: |
           Value '{{ sap_software_product }}' is invalid.
-          Available options: {{ sap_software_install_dictionary.keys() }} 
+          Available options: {{ sap_software_install_dictionary.keys() }}
       when:
         - sap_software_product_register.user_input is defined
         - sap_software_product not in sap_software_install_dictionary.keys()
