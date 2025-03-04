@@ -9,7 +9,6 @@
 
 # Mandatory inputs
 - name: Block for sap_system_sid
-  when: sap_system_sid is not defined or not sap_system_sid
   no_log: true
   block:
     - name: Interactive input - sap_system_sid
@@ -18,87 +17,134 @@
           Please enter SAP System ID (SID).
           Example: S01
       register: sap_system_sid_register
+      when: sap_system_sid is not defined or not sap_system_sid
 
     - name: Set fact for sap_system_sid
       ansible.builtin.set_fact:
         sap_system_sid: "{{ sap_system_sid_register.user_input }}"
         sap_swpm_sid: "{{ sap_system_sid_register.user_input }}"
+      when: sap_system_sid is not defined or not sap_system_sid
+
+    - name: Interactive input - sap_system_sid - Invalid input
+      ansible.builtin.fail:
+        msg: |
+          Invalid length of '{{ sap_system_sid }}'.
+          Required length of SAP System ID is 3 letters.
+      when:
+        - sap_system_sid_register.user_input is defined
+        - sap_system_sid | length != 3
 
 - name: Block for sap_system_nwas_abap_ascs_instance_nr
-  when: sap_system_nwas_abap_ascs_instance_nr is not defined or not sap_system_nwas_abap_ascs_instance_nr
   no_log: true
   block:
     - name: Interactive input - sap_system_nwas_abap_ascs_instance_nr
       ansible.builtin.pause:
         prompt: |
-          Please enter ABAP System Central Service Instance Number (ASCS).
+          Please enter SAP ABAP System Central Service Instance Number (ASCS).
           Example: 00
       register: sap_system_nwas_abap_ascs_instance_nr_register
-      failed_when: sap_system_nwas_abap_ascs_instance_nr_register.user_input | length != 2
+      when: sap_system_nwas_abap_ascs_instance_nr is not defined or not sap_system_nwas_abap_ascs_instance_nr
 
     - name: Set fact for sap_system_nwas_abap_ascs_instance_nr
       ansible.builtin.set_fact:
         sap_system_nwas_abap_ascs_instance_nr: "{{ sap_system_nwas_abap_ascs_instance_nr_register.user_input }}"
         sap_swpm_ascs_instance_nr: "{{ sap_system_nwas_abap_ascs_instance_nr_register.user_input }}"
+      when: sap_system_nwas_abap_ascs_instance_nr is not defined or not sap_system_nwas_abap_ascs_instance_nr
+
+    - name: Interactive input - sap_system_nwas_abap_ascs_instance_nr - Invalid input
+      ansible.builtin.fail:
+        msg: |
+          Invalid length of '{{ sap_system_nwas_abap_ascs_instance_nr }}'.
+          Required length of SAP ABAP System Central Service Instance Number is 2 letters.
+      when:
+        - sap_system_nwas_abap_ascs_instance_nr_register.user_input is defined
+        - sap_system_nwas_abap_ascs_instance_nr | length != 2
 
 - name: Block for sap_system_nwas_abap_ers_instance_nr
   when:
     - interactive_input_type_ha | d(false)
-    - sap_system_nwas_abap_ers_instance_nr is not defined or not sap_system_nwas_abap_ers_instance_nr
   no_log: true
   block:
     - name: Interactive input - sap_system_nwas_abap_ers_instance_nr
       ansible.builtin.pause:
         prompt: |
-          Please enter Enqueue Replication Service Instance Number (ERS).
+          Please enter SAP Enqueue Replication Service Instance Number (ERS).
           Example: 01
       register: sap_system_nwas_abap_ers_instance_nr_register
-      failed_when: sap_system_nwas_abap_ers_instance_nr_register.user_input | length != 2
+      when: sap_system_nwas_abap_ers_instance_nr is not defined or not sap_system_nwas_abap_ers_instance_nr
 
     - name: Set fact for sap_system_nwas_abap_ers_instance_nr
       ansible.builtin.set_fact:
         sap_system_nwas_abap_ers_instance_nr: "{{ sap_system_nwas_abap_ers_instance_nr_register.user_input }}"
         sap_swpm_ers_instance_nr: "{{ sap_system_nwas_abap_ers_instance_nr_register.user_input }}"
+      when: sap_system_nwas_abap_ers_instance_nr is not defined or not sap_system_nwas_abap_ers_instance_nr
+
+    - name: Interactive input - sap_system_nwas_abap_ers_instance_nr - Invalid input
+      ansible.builtin.fail:
+        msg: |
+          Invalid length of '{{ sap_system_nwas_abap_ers_instance_nr }}'.
+          Required length of SAP Enqueue Replication Service Instance Number is 2 letters.
+      when:
+        - sap_system_nwas_abap_ers_instance_nr_register.user_input is defined
+        - sap_system_nwas_abap_ers_instance_nr | length != 2
 
 - name: Block for sap_system_nwas_abap_pas_instance_nr
   when:
     - interactive_input_type_ha | d(false)
     - interactive_input_type in ['s4hana_ha']
-    - sap_system_nwas_abap_pas_instance_nr is not defined or not sap_system_nwas_abap_pas_instance_nr
   no_log: true
   block:
     - name: Interactive input - sap_system_nwas_abap_pas_instance_nr
       ansible.builtin.pause:
         prompt: |
-          Please enter Primary Application Server Instance Number (PAS).
+          Please enter SAP Primary Application Server Instance Number (PAS).
           Example: 02
       register: sap_system_nwas_abap_pas_instance_nr_register
-      failed_when: sap_system_nwas_abap_pas_instance_nr_register.user_input | length != 2
+      when: sap_system_nwas_abap_pas_instance_nr is not defined or not sap_system_nwas_abap_pas_instance_nr
 
     - name: Set fact for sap_system_nwas_abap_pas_instance_nr
       ansible.builtin.set_fact:
         sap_system_nwas_abap_pas_instance_nr: "{{ sap_system_nwas_abap_pas_instance_nr_register.user_input }}"
         sap_swpm_pas_instance_nr: "{{ sap_system_nwas_abap_pas_instance_nr_register.user_input }}"
+      when: sap_system_nwas_abap_pas_instance_nr is not defined or not sap_system_nwas_abap_pas_instance_nr
+
+    - name: Interactive input - sap_system_nwas_abap_pas_instance_nr - Invalid input
+      ansible.builtin.fail:
+        msg: |
+          Invalid length of '{{ sap_system_nwas_abap_pas_instance_nr }}'.
+          Required length of SAP Primary Application Server Instance Number is 2 letters.
+      when:
+        - sap_system_nwas_abap_pas_instance_nr_register.user_input is defined
+        - sap_system_nwas_abap_pas_instance_nr | length != 2
 
 - name: Block for sap_system_nwas_abap_aas_instance_nr
   when:
     - interactive_input_type_ha | d(false)
     - interactive_input_type in ['s4hana_ha']
-    - sap_system_nwas_abap_aas_instance_nr is not defined or not sap_system_nwas_abap_aas_instance_nr
   no_log: true
   block:
     - name: Interactive input - sap_system_nwas_abap_aas_instance_nr
       ansible.builtin.pause:
         prompt: |
-          Please enter Additional Application Server Instance Number (AAS).
+          Please enter SAP Additional Application Server Instance Number (AAS).
           Example: 03
       register: sap_system_nwas_abap_aas_instance_nr_register
-      failed_when: sap_system_nwas_abap_aas_instance_nr_register.user_input | length != 2
+      when: sap_system_nwas_abap_aas_instance_nr is not defined or not sap_system_nwas_abap_aas_instance_nr
 
     - name: Set fact for sap_system_nwas_abap_aas_instance_nr
       ansible.builtin.set_fact:
         sap_system_nwas_abap_aas_instance_nr: "{{ sap_system_nwas_abap_aas_instance_nr_register.user_input }}"
         sap_swpm_aas_instance_nr: "{{ sap_system_nwas_abap_aas_instance_nr_register.user_input }}"
+      when: sap_system_nwas_abap_aas_instance_nr is not defined or not sap_system_nwas_abap_aas_instance_nr
+
+    - name: Interactive input - sap_system_nwas_abap_aas_instance_nr - Invalid input
+      ansible.builtin.fail:
+        msg: |
+          Invalid length of '{{ sap_system_nwas_abap_aas_instance_nr }}'.
+          Required length of SAP Additional Application Server Instance Number is 2 letters.
+      when:
+        - sap_system_nwas_abap_aas_instance_nr_register.user_input is defined
+        - sap_system_nwas_abap_aas_instance_nr | length != 2
 
 
 # Passwords
@@ -299,7 +345,8 @@
 - name: Interactive input - Optional inputs for SWPM
   ansible.builtin.pause:
     prompt: |
-      Please enter y if you would like to enter optional inputs for SWPM. (y/n). Default: n
+      Please enter y if you would like to enter optional inputs for SWPM. (y/n).
+      Default: n
       Press enter to skip.
   register: __optional_inputs_swpm
   no_log: true
@@ -355,16 +402,27 @@
 - name: Block for sap_swpm_update_etchosts
   when:
     - __optional_inputs_swpm.user_input == 'y'
-    - sap_swpm_update_etchosts is not defined or not sap_swpm_update_etchosts
   block:
     - name: Interactive input - sap_swpm_update_etchosts
       ansible.builtin.pause:
         prompt: |
           (Optional) Please enter true to configure /etc/hosts in sap_swpm role.
           Default: false
+          Press enter to skip.
       register: sap_swpm_update_etchosts_register
+      when: sap_swpm_update_etchosts is not defined or not sap_swpm_update_etchosts
 
     - name: Set fact for sap_swpm_update_etchosts
       ansible.builtin.set_fact:
         sap_swpm_update_etchosts: "{{ 'false' if not sap_swpm_update_etchosts_register.user_input
          else sap_swpm_update_etchosts_register.user_input }}"
+      when: sap_swpm_update_etchosts is not defined or not sap_swpm_update_etchosts
+
+    - name: Interactive input - sap_swpm_update_etchosts - Invalid input
+      ansible.builtin.fail:
+        msg: |
+          Value '{{ sap_swpm_update_etchosts }}' is invalid.
+          Available options: true , false
+      when:
+        - sap_swpm_update_etchosts_register.user_input is defined
+        - sap_swpm_update_etchosts not in ['true', 'false']

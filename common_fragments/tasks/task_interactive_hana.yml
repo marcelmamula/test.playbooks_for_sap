@@ -9,7 +9,6 @@
 
 # Mandatory inputs
 - name: Block for sap_system_hana_db_sid
-  when: sap_system_hana_db_sid is not defined or not sap_system_hana_db_sid
   block:
     - name: Interactive input - sap_system_hana_db_sid
       ansible.builtin.pause:
@@ -17,14 +16,24 @@
           Please enter SAP HANA System ID (SID).
           Example: H01
       register: sap_system_hana_db_sid_register
+      when: sap_system_hana_db_sid is not defined or not sap_system_hana_db_sid
 
     - name: Set fact for sap_system_hana_db_sid
       ansible.builtin.set_fact:
         sap_system_hana_db_sid: "{{ sap_system_hana_db_sid_register.user_input }}"
         sap_swpm_db_sid: "{{ sap_system_hana_db_sid_register.user_input }}"
+      when: sap_system_hana_db_sid is not defined or not sap_system_hana_db_sid
+
+    - name: Interactive input - sap_system_hana_db_sid - Invalid input
+      ansible.builtin.fail:
+        msg: |
+          Invalid length of '{{ sap_system_hana_db_sid }}'.
+          Required length of SAP HANA System ID is 3 letters.
+      when:
+        - sap_system_hana_db_sid_register.user_input is defined
+        - sap_system_hana_db_sid | length != 3
 
 - name: Block for sap_system_hana_db_instance_nr
-  when: sap_system_hana_db_instance_nr is not defined or not sap_system_hana_db_instance_nr
   block:
     - name: Interactive input - sap_system_hana_db_instance_nr
       ansible.builtin.pause:
@@ -32,12 +41,22 @@
           Please enter SAP HANA Instance Number.
           Example: 90
       register: sap_system_hana_db_instance_nr_register
-      failed_when: sap_system_hana_db_instance_nr_register.user_input | length != 2
+      when: sap_system_hana_db_instance_nr is not defined or not sap_system_hana_db_instance_nr
 
     - name: Set fact for sap_system_hana_db_instance_nr
       ansible.builtin.set_fact:
         sap_system_hana_db_instance_nr: "{{ sap_system_hana_db_instance_nr_register.user_input }}"
         sap_swpm_db_instance_nr: "{{ sap_system_hana_db_instance_nr_register.user_input }}"
+      when: sap_system_hana_db_instance_nr is not defined or not sap_system_hana_db_instance_nr
+
+    - name: Interactive input - sap_system_hana_db_instance_nr - Invalid input
+      ansible.builtin.fail:
+        msg: |
+          Invalid length of '{{ sap_system_hana_db_instance_nr }}'.
+          Required length of SAP HANA Instance Number is 2 letters.
+      when:
+        - sap_system_hana_db_instance_nr_register.user_input is defined
+        - sap_system_hana_db_instance_nr | length != 2
 
 
 # Passwords
@@ -145,7 +164,6 @@
 - name: Block for sap_hana_install_log_mode
   when:
     - __optional_inputs_hana.user_input == 'y'
-    - sap_hana_install_log_mode is not defined or not sap_hana_install_log_mode
   block:
     - name: Interactive input - sap_hana_install_log_mode
       ansible.builtin.pause:
@@ -154,12 +172,22 @@
           Default: normal
           Press enter to skip.
       register: sap_hana_install_log_mode_register
-      failed_when: sap_hana_install_log_mode_register.user_input not in ['normal', 'overwrite']
+      when: sap_hana_install_log_mode is not defined or not sap_hana_install_log_mode
 
     - name: Set fact for sap_hana_install_log_mode
       ansible.builtin.set_fact:
         sap_hana_install_log_mode: "{{ 'normal' if not sap_hana_install_log_mode_register.user_input
           else sap_hana_install_log_mode_register.user_input }}"
+      when: sap_hana_install_log_mode is not defined or not sap_hana_install_log_mode
+
+    - name: Interactive input - sap_hana_install_log_mode - Invalid input
+      ansible.builtin.fail:
+        msg: |
+          Value '{{ sap_hana_install_log_mode }}' is invalid.
+          Available options: normal, overwrite
+      when:
+        - sap_hana_install_log_mode_register.user_input is defined
+        - sap_hana_install_log_mode not in ['normal', 'overwrite']
 
 - name: Block for sap_hana_install_components
   when:
@@ -232,20 +260,30 @@
 - name: Block for sap_hana_install_restrict_max_mem
   when:
     - __optional_inputs_hana.user_input == 'y'
-    - sap_hana_install_restrict_max_mem is not defined or not sap_hana_install_restrict_max_mem
   block:
     - name: Interactive input - sap_hana_install_restrict_max_mem
       ansible.builtin.pause:
         prompt: |
           (Optional) Please enter hdblcm parameter restrict_max_mem (y/n).
           Default: n
+          Press enter to skip.
       register: sap_hana_install_restrict_max_mem_register
-      failed_when: sap_hana_install_restrict_max_mem_register.user_input not in ['y', 'n']
+      when: sap_hana_install_restrict_max_mem is not defined or not sap_hana_install_restrict_max_mem
 
     - name: Set fact for sap_hana_install_restrict_max_mem
       ansible.builtin.set_fact:
         sap_hana_install_restrict_max_mem: "{{ 'n' if not sap_hana_install_restrict_max_mem_register.user_input
           else sap_hana_install_restrict_max_mem_register.user_input }}"
+      when: sap_hana_install_restrict_max_mem is not defined or not sap_hana_install_restrict_max_mem
+
+    - name: Interactive input - sap_hana_install_restrict_max_mem - Invalid input
+      ansible.builtin.fail:
+        msg: |
+          Value '{{ sap_hana_install_restrict_max_mem }}' is invalid.
+          Available options: y, n
+      when:
+        - sap_hana_install_restrict_max_mem_register.user_input is defined
+        - sap_hana_install_restrict_max_mem not in ['y', 'n']
 
 - name: Block for sap_hana_install_max_mem
   when:
@@ -267,20 +305,32 @@
 - name: Block for sap_hana_install_system_restart
   when:
     - __optional_inputs_hana.user_input == 'y'
-    - sap_hana_install_system_restart is not defined or not sap_hana_install_system_restart
   block:
     - name: Interactive input - sap_hana_install_system_restart
       ansible.builtin.pause:
         prompt: |
           (Optional) Please select if role should start SAP HANA after each system boot (y/n).
           Default: n
+          Press enter to skip.
       register: sap_hana_install_system_restart_register
-      failed_when: sap_hana_install_system_restart_register.user_input not in ['y', 'n']
+      when:
+        - sap_hana_install_system_restart is not defined or not sap_hana_install_system_restart
 
     - name: Set fact for sap_hana_install_system_restart
       ansible.builtin.set_fact:
         sap_hana_install_system_restart: "{{ 'n' if not sap_hana_install_system_restart_register.user_input
           else sap_hana_install_system_restart_register.user_input }}"
+      when:
+        - sap_hana_install_system_restart is not defined or not sap_hana_install_system_restart
+
+    - name: Interactive input - sap_hana_install_system_restart - Invalid input
+      ansible.builtin.fail:
+        msg: |
+          Value '{{ sap_hana_install_system_restart }}' is invalid.
+          Available options: y, n
+      when:
+        - sap_hana_install_system_restart_register.user_input is defined
+        - sap_hana_install_system_restart not in ['y', 'n']
 
 - name: Block for sap_hana_install_hdblcm_extraargs
   when:

@@ -61,8 +61,10 @@
 
     - name: Set fact for sap_vm_provision_aws_region
       ansible.builtin.set_fact:
-        sap_vm_provision_aws_region: "{{ sap_vm_provision_aws_region_register.user_input | d(sap_vm_provision_aws_vpc_availability_zone[:-1]) }}"
-        sap_ha_pacemaker_cluster_aws_region: "{{ sap_vm_provision_aws_region_register.user_input | d(sap_vm_provision_aws_vpc_availability_zone[:-1]) }}"
+        sap_vm_provision_aws_region: "{{ sap_vm_provision_aws_vpc_availability_zone[:-1]
+          if not sap_vm_provision_aws_region_register.user_input else sap_vm_provision_aws_region_register.user_input}}"
+        sap_ha_pacemaker_cluster_aws_region: "{{ sap_vm_provision_aws_vpc_availability_zone[:-1]
+          if not sap_vm_provision_aws_region_register.user_input else sap_vm_provision_aws_region_register.user_input}}"
 
 - name: Block for sap_vm_provision_aws_vpc_subnet_create_boolean
   when:
@@ -78,7 +80,8 @@
 
     - name: Set fact for sap_vm_provision_aws_vpc_subnet_create_boolean
       ansible.builtin.set_fact:
-        sap_vm_provision_aws_vpc_subnet_create_boolean: "{{ 'false' if not sap_vm_provision_aws_vpc_subnet_create_boolean_register.user_input
+        sap_vm_provision_aws_vpc_subnet_create_boolean: "{{ 'false'
+          if not sap_vm_provision_aws_vpc_subnet_create_boolean_register.user_input
           else sap_vm_provision_aws_vpc_subnet_create_boolean_register.user_input }}"
 
 - name: Block for sap_vm_provision_aws_vpc_subnet_id
@@ -94,24 +97,48 @@
       ansible.builtin.set_fact:
         sap_vm_provision_aws_vpc_subnet_id: "{{ sap_vm_provision_aws_vpc_subnet_id_register.user_input }}"
 
+
 - name: Block for sap_vm_provision_host_specification_plan
-  when: sap_vm_provision_host_specification_plan is not defined or not sap_vm_provision_host_specification_plan
+  when: sap_vm_provision_aws_ec2_vs_host_specifications_dictionary is defined
+    and sap_vm_provision_aws_ec2_vs_host_specifications_dictionary
   block:
     - name: Interactive input - sap_vm_provision_host_specification_plan
       ansible.builtin.pause:
         prompt: |
           Please select deployment plan defined in sap_vm_provision_aws_ec2_vs_host_specifications_dictionary.
           Available values: {{ sap_vm_provision_aws_ec2_vs_host_specifications_dictionary.keys() | list }}
+          Default: {{ __default_plan }}
+          Press enter to skip.
       register: sap_vm_provision_host_specification_plan_register
-      failed_when: sap_vm_provision_host_specification_plan_register.user_input
-        not in sap_vm_provision_aws_ec2_vs_host_specifications_dictionary.keys()
+      vars:
+        __default_plan: "{{ (sap_vm_provision_aws_ec2_vs_host_specifications_dictionary | dict2items | first).key }}"
+      when:
+        - sap_vm_provision_host_specification_plan is not defined or not sap_vm_provision_host_specification_plan
+          or sap_vm_provision_host_specification_plan not in sap_vm_provision_aws_ec2_vs_host_specifications_dictionary.keys()
 
     - name: Set fact for sap_vm_provision_host_specification_plan
       ansible.builtin.set_fact:
-        sap_vm_provision_host_specification_plan: "{{ sap_vm_provision_host_specification_plan_register.user_input }}"
+        sap_vm_provision_host_specification_plan:
+          "{{ (sap_vm_provision_aws_ec2_vs_host_specifications_dictionary | dict2items | first).key
+          if not sap_vm_provision_host_specification_plan_register.user_input
+          else sap_vm_provision_host_specification_plan_register.user_input }}"
+      when:
+        - sap_vm_provision_host_specification_plan is not defined or not sap_vm_provision_host_specification_plan
+          or sap_vm_provision_host_specification_plan not in sap_vm_provision_aws_ec2_vs_host_specifications_dictionary.keys()
+
+    - name: Interactive input - sap_vm_provision_host_specification_plan - Invalid input
+      ansible.builtin.fail:
+        msg: |
+          Value '{{ sap_vm_provision_host_specification_plan }}' is invalid.
+          Available options: {{ sap_vm_provision_aws_ec2_vs_host_specifications_dictionary.keys() }} 
+      when:
+        - sap_vm_provision_host_specification_plan_register.user_input is defined
+        - sap_vm_provision_host_specification_plan not in sap_vm_provision_aws_ec2_vs_host_specifications_dictionary.keys()
+
 
 - name: Block for sap_vm_provision_aws_ec2_vs_host_os_image
-  when: sap_vm_provision_aws_ec2_vs_host_os_image is not defined or not sap_vm_provision_aws_ec2_vs_host_os_image
+  when: sap_vm_provision_aws_ec2_vs_host_os_image_dictionary is defined
+    and sap_vm_provision_aws_ec2_vs_host_os_image_dictionary
   block:
     - name: Interactive input - sap_vm_provision_aws_ec2_vs_host_os_image
       ansible.builtin.pause:
@@ -119,27 +146,52 @@
           Please select OS image defined in sap_vm_provision_aws_ec2_vs_host_os_image_dictionary.
           Available values: {{ sap_vm_provision_aws_ec2_vs_host_os_image_dictionary.keys() | list }}
       register: sap_vm_provision_aws_ec2_vs_host_os_image_register
-      failed_when: sap_vm_provision_aws_ec2_vs_host_os_image_register.user_input
-        not in sap_vm_provision_aws_ec2_vs_host_os_image_dictionary.keys()
+      when:
+        - sap_vm_provision_aws_ec2_vs_host_os_image is not defined or not sap_vm_provision_aws_ec2_vs_host_os_image
+          or sap_vm_provision_aws_ec2_vs_host_os_image not in sap_vm_provision_aws_ec2_vs_host_os_image_dictionary.keys()
 
     - name: Set fact for sap_vm_provision_aws_ec2_vs_host_os_image
       ansible.builtin.set_fact:
         sap_vm_provision_aws_ec2_vs_host_os_image: "{{ sap_vm_provision_aws_ec2_vs_host_os_image_register.user_input }}"
+      when:
+        - sap_vm_provision_aws_ec2_vs_host_os_image is not defined or not sap_vm_provision_aws_ec2_vs_host_os_image
+          or sap_vm_provision_aws_ec2_vs_host_os_image not in sap_vm_provision_aws_ec2_vs_host_os_image_dictionary.keys()
+
+    - name: Interactive input - sap_vm_provision_aws_ec2_vs_host_os_image - Invalid input
+      ansible.builtin.fail:
+        msg: |
+          Value '{{ sap_vm_provision_aws_ec2_vs_host_os_image }}' is invalid.
+          Available options: {{ sap_vm_provision_aws_ec2_vs_host_os_image_dictionary.keys() }} 
+      when:
+        - sap_vm_provision_aws_ec2_vs_host_os_image_register.user_input is defined
+        - sap_vm_provision_aws_ec2_vs_host_os_image not in sap_vm_provision_aws_ec2_vs_host_os_image_dictionary.keys()
+
 
 - name: Block for sap_vm_provision_aws_dns_overwrite
-  when: sap_vm_provision_aws_dns_overwrite is not defined or not sap_vm_provision_aws_dns_overwrite
   block:
     - name: Interactive input - sap_vm_provision_aws_dns_overwrite
       ansible.builtin.pause:
         prompt: |
-          Please enter true to enable overwrite of DNS (true/false).
+          Please enter true to enable overwrite of DNS.
           Default: false
           Creation of DNS entries will fail, if name is already present.
       register: sap_vm_provision_aws_dns_overwrite_register
+      when: sap_vm_provision_aws_dns_overwrite is not defined or not sap_vm_provision_aws_dns_overwrite
 
     - name: Set fact for sap_vm_provision_aws_dns_overwrite
       ansible.builtin.set_fact:
-        sap_vm_provision_aws_dns_overwrite: "{{ sap_vm_provision_aws_dns_overwrite_register.user_input }}"
+        sap_vm_provision_aws_dns_overwrite: "{{ 'false' if not sap_vm_provision_aws_dns_overwrite_register.user_input
+         else sap_vm_provision_aws_dns_overwrite_register.user_input }}"
+      when: sap_vm_provision_aws_dns_overwrite is not defined or not sap_vm_provision_aws_dns_overwrite
+
+    - name: Interactive input - sap_vm_provision_aws_dns_overwrite - Invalid input
+      ansible.builtin.fail:
+        msg: |
+          Value '{{ sap_vm_provision_aws_dns_overwrite }}' is invalid.
+          Available options: true , false
+      when:
+        - sap_vm_provision_aws_dns_overwrite_register.user_input is defined
+        - sap_vm_provision_aws_dns_overwrite not in ['true', 'false']
 
 
 # Bastion details
