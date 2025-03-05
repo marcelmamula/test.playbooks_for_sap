@@ -1,4 +1,10 @@
 ---
+#### Instructions for using existing_hosts ####
+# When existing_hosts are used, execution of provisioning role sap_vm_provision will be skipped.
+# This results in the need to define additional variables below, e.g. sap_general_preconfigure_domain.
+# Role sap_storage_setup will be searching for block devices based on their definition in storage_definition
+# under sap_vm_provision_existing_hosts_host_specifications_dictionary. These devices must not be partitioned!
+
 # Infrastructure provisioning definitions
 sap_vm_provision_iac_type: "existing_hosts"
 sap_vm_provision_iac_platform: "existing_hosts"
