@@ -41,17 +41,26 @@ jobs:
       - name: Copy shared files to scenarios
         working-directory: repo_playbooks
         run: |
+          shopt -s nullglob  # Ensures that empty results are empty
+          
           # Loop through all deploy_scenarios
           for dir in ./deploy_scenarios/*; do
-            # Copy tasks and update paths
-            cp ./common_fragments/tasks/*.yml $dir/optional/
+            # check if there are base files present, identifying reworked scenario
+            files=("$dir"/ansible_extravars_*_base.yml)
 
-            # Update path to copied tasks
-            sed -i 's/..\/..\/common_fragments\/tasks\//optional\//' $dir/ansible_playbook.yml $dir/optional/*.yml
+            if [[ ${#files[@]} -gt 0 ]]; then
+              # Copy tasks and update paths
+              cp ./common_fragments/tasks/*.yml $dir/optional/
 
-            # Copy ansible_requirements
-            cp ./common_fragments/vars/ansible_requirements.yml $dir/
+              # Update path to copied tasks
+              sed -i 's/..\/..\/common_fragments\/tasks\//optional\//' $dir/ansible_playbook.yml $dir/optional/*.yml
+
+              # Copy ansible_requirements
+              cp ./common_fragments/vars/ansible_requirements.yml $dir/
+            fi  # if base files were found
           done
+          
+          shopt -u nullglob
 
       - name: Append shared fragments to deploy_scenarios files
         working-directory: repo_playbooks
@@ -61,64 +70,68 @@ jobs:
 
             # Loop through all valid extravars files
             for file in "$dir"/ansible_extravars_*_base.yml; do
-              # Extract platform name using basename of file
-              platform=$(basename "$file" | sed 's/ansible_extravars_\(.*\)_base\.yml/\1/')
-              source_fragment="common_fragments/vars/platform_${platform}.yml"
+              if [[ -f "$file" ]]; then
+                # Extract platform name using basename of file
+                platform=$(basename "$file" | sed 's/ansible_extravars_\(.*\)_base\.yml/\1/')
+                source_fragment="common_fragments/vars/platform_${platform}.yml"
 
-              # Execute only when source platform vars fragment exists
-              if [ -f "$source_fragment" ]; then
-                # Append platform extravars file
-                sed 's/^---/\n/g' "$source_fragment" >> "$file"
+                # Execute only when source platform vars fragment exists
+                if [ -f "$source_fragment" ]; then
+                  # Append platform extravars file
+                  sed 's/^---/\n/g' "$source_fragment" >> "$file"
 
-                # Extract host_os_image_dictionary dictionary and insert into interactive extravars file
-                dict_images="sap_vm_provision_${platform}_host_os_image_dictionary"
-                dict_images_extract=$(yq ".\"${dict_images}\"" "$source_fragment")
+                  # Extract host_os_image_dictionary dictionary and insert into interactive extravars file
+                  dict_images="sap_vm_provision_${platform}_host_os_image_dictionary"
+                  dict_images_extract=$(yq ".\"${dict_images}\"" "$source_fragment")
+
+                  # Empty extraction equals to string 'null'
+                  if [[ "$dict_images_extract" != "null" ]]; then
+                    echo "${dict_images_extract}" > dict_images_extract.yml
+
+                    # Move extracted data to new file to avoid yq removing empty lines
+                    touch dict_images_temp.yml
+                    yq e ".\"${dict_images}\" = load(\"dict_images_extract.yml\")" -i dict_images_temp.yml
+
+                    # Ensure append includes empty line
+                    echo "" >> "$dir"/optional/ansible_extravars_interactive.yml
+                    cat dict_images_temp.yml >> "$dir"/optional/ansible_extravars_interactive.yml
+
+                    rm dict_images_temp.yml dict_images_extract.yml
+                  fi  # if dictionary extract exists
+                fi  # if source_fragment exists
+
+                # Extract host_specifications_dictionary dictionary and insert into interactive extravars file
+                dict_spec="sap_vm_provision_${platform}_host_specifications_dictionary"
+                dict_spec_extract=$(yq ".\"${dict_spec}\"" "$file")
 
                 # Empty extraction equals to string 'null'
-                if [[ "$dict_images_extract" != "null" ]]; then
-                  echo "${dict_images_extract}" > dict_images_extract.yml
+                if [[ "$dict_spec_extract" != "null" ]]; then
+                  echo "${dict_spec_extract}" > dict_spec_extract.yml
 
                   # Move extracted data to new file to avoid yq removing empty lines
-                  touch dict_images_temp.yml
-                  yq e ".\"${dict_images}\" = load(\"dict_images_extract.yml\")" -i dict_images_temp.yml
+                  touch dict_spec_temp.yml
+                  yq e ".\"${dict_spec}\" = load(\"dict_spec_extract.yml\")" -i dict_spec_temp.yml
 
                   # Ensure append includes empty line
                   echo "" >> "$dir"/optional/ansible_extravars_interactive.yml
-                  cat dict_images_temp.yml >> "$dir"/optional/ansible_extravars_interactive.yml
+                  cat dict_spec_temp.yml >> "$dir"/optional/ansible_extravars_interactive.yml
 
-                  rm dict_images_temp.yml dict_images_extract.yml
-                fi
-              fi
+                  rm dict_spec_temp.yml dict_spec_extract.yml
+                fi  # if dictionary extract exists
 
-              # Extract host_specifications_dictionary dictionary and insert into interactive extravars file
-              dict_spec="sap_vm_provision_${platform}_host_specifications_dictionary"
-              dict_spec_extract=$(yq ".\"${dict_spec}\"" "$file")
+                # Remove _base from extravars file name
+                new_file="${file%_base.yml}.yml"
+                mv "$file" "$new_file"
+              fi  # if file exists
 
-              # Empty extraction equals to string 'null'
-              if [[ "$dict_spec_extract" != "null" ]]; then
-                echo "${dict_spec_extract}" > dict_spec_extract.yml
-
-                # Move extracted data to new file to avoid yq removing empty lines
-                touch dict_spec_temp.yml
-                yq e ".\"${dict_spec}\" = load(\"dict_spec_extract.yml\")" -i dict_spec_temp.yml
-
-                # Ensure append includes empty line
-                echo "" >> "$dir"/optional/ansible_extravars_interactive.yml
-                cat dict_spec_temp.yml >> "$dir"/optional/ansible_extravars_interactive.yml
-
-                rm dict_spec_temp.yml dict_spec_extract.yml
-              fi
-
-              # Remove _base from extravars file name
-              new_file="${file%_base.yml}.yml"
-              mv "$file" "$new_file"
-
-            done
+            done  # file loop
 
             # Ensure interactive var file has empty line
-            echo "" >> "$dir"/optional/ansible_extravars_interactive.yml
+            if [[ -f "$dir"/optional/ansible_extravars_interactive.yml ]]; then
+              echo "" >> "$dir"/optional/ansible_extravars_interactive.yml
+            fi
 
-          done
+          done  # dir loop
 
           # Remove fragments after copying them
           git rm -rf ./common_fragments
