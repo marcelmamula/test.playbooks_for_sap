@@ -14,14 +14,14 @@
 
     - name: Check if interactive tasks are available
       ansible.builtin.stat:
-        path: ../../common_fragments/tasks/task_interactive_inputs.yml
+        path: optional/task_interactive_inputs.yml
       register: sap_playbook_interactive_tasks_availability
       ignore_errors: true
       when: sap_playbook_interactive_input_type is defined and sap_playbook_interactive_input_type
 
     - name: Playbook Interactive - Collection of interactive inputs
       ansible.builtin.include_tasks:
-        file: ../../common_fragments/tasks/task_interactive_inputs.yml
+        file: optional/task_interactive_inputs.yml
       when:
         - sap_vm_provision_iac_type is undefined or sap_vm_provision_iac_platform is undefined
         - sap_playbook_interactive_input_type is defined and sap_playbook_interactive_input_type
@@ -120,7 +120,7 @@
 
     - name: Prepare environment and download software
       ansible.builtin.include_tasks:
-        file: ../../common_fragments/tasks/task_download_sap_media.yml
+        file: optional/task_download_sap_media.yml
       when: sap_playbook_collection_list_output.stdout_lines | select('search', 'community.sap_launchpad')
       vars:
         softwarecenter_search_list:
