@@ -93,11 +93,11 @@
         - sap_software_product not in sap_software_install_dictionary.keys()
 
 
-# interactive_input_type defines which type of inputs are gathered
+# sap_playbook_interactive_input_type defines which type of inputs are gathered
 - name: Execute interactive type - HANA
   ansible.builtin.include_tasks:
     file: "../../common_fragments/tasks/task_interactive_hana.yml"
-  when: interactive_input_type is defined and interactive_input_type in __hana_types
+  when: sap_playbook_interactive_input_type is defined and sap_playbook_interactive_input_type in __hana_types
   vars:
     __hana_types:
       - hana
@@ -108,7 +108,7 @@
 - name: Execute interactive type - SWPM
   ansible.builtin.include_tasks:
     file: "../../common_fragments/tasks/task_interactive_swpm.yml"
-  when: interactive_input_type is defined and interactive_input_type in __swpm_types
+  when: sap_playbook_interactive_input_type is defined and sap_playbook_interactive_input_type in __swpm_types
   vars:
     __swpm_types:
       - s4hana

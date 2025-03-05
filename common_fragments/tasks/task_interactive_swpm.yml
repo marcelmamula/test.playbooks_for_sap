@@ -3,9 +3,9 @@
 
 - name: Set temporary fact if target has High Availability
   ansible.builtin.set_fact:
-    interactive_input_type_ha: true
+    sap_playbook_interactive_input_type_ha: true
   when:
-    - interactive_input_type in ['s4hana_ha']
+    - sap_playbook_interactive_input_type in ['s4hana_ha']
 
 # Mandatory inputs
 - name: Block for sap_system_sid
@@ -62,7 +62,7 @@
 
 - name: Block for sap_system_nwas_abap_ers_instance_nr
   when:
-    - interactive_input_type_ha | d(false)
+    - sap_playbook_interactive_input_type_ha | d(false)
   no_log: true
   block:
     - name: Interactive input - sap_system_nwas_abap_ers_instance_nr
@@ -90,8 +90,8 @@
 
 - name: Block for sap_system_nwas_abap_pas_instance_nr
   when:
-    - interactive_input_type_ha | d(false)
-    - interactive_input_type in ['s4hana_ha']
+    - sap_playbook_interactive_input_type_ha | d(false)
+    - sap_playbook_interactive_input_type in ['s4hana_ha']
   no_log: true
   block:
     - name: Interactive input - sap_system_nwas_abap_pas_instance_nr
@@ -119,8 +119,8 @@
 
 - name: Block for sap_system_nwas_abap_aas_instance_nr
   when:
-    - interactive_input_type_ha | d(false)
-    - interactive_input_type in ['s4hana_ha']
+    - sap_playbook_interactive_input_type_ha | d(false)
+    - sap_playbook_interactive_input_type in ['s4hana_ha']
   no_log: true
   block:
     - name: Interactive input - sap_system_nwas_abap_aas_instance_nr
@@ -259,7 +259,7 @@
 # Mandatory inputs for SAP High Availability
 - name: Block for sap_vm_provision_ha_vip_nwas_abap_ascs
   when:
-    - interactive_input_type_ha | d(false)
+    - sap_playbook_interactive_input_type_ha | d(false)
     - sap_vm_provision_ha_vip_nwas_abap_ascs is not defined or not sap_vm_provision_ha_vip_nwas_abap_ascs
   block:
     - name: Interactive input - sap_vm_provision_ha_vip_nwas_abap_ascs
@@ -282,7 +282,7 @@
 
 - name: Block for sap_vm_provision_ha_vip_nwas_abap_ers
   when:
-    - interactive_input_type_ha | d(false)
+    - sap_playbook_interactive_input_type_ha | d(false)
     - sap_vm_provision_ha_vip_nwas_abap_ers is not defined or not sap_vm_provision_ha_vip_nwas_abap_ers
   block:
     - name: Interactive input - sap_vm_provision_ha_vip_nwas_abap_ers
@@ -305,7 +305,7 @@
 
 - name: Block for sap_system_ascs_ers_cluster_name
   when:
-    - interactive_input_type_ha | d(false)
+    - sap_playbook_interactive_input_type_ha | d(false)
     - sap_system_ascs_ers_cluster_name is not defined or not sap_system_ascs_ers_cluster_name
   block:
     - name: Interactive input - sap_system_ascs_ers_cluster_name
@@ -323,7 +323,7 @@
 
 - name: Block for sap_system_ascs_ers_hacluster_user_password
   when:
-    - interactive_input_type_ha | d(false)
+    - sap_playbook_interactive_input_type_ha | d(false)
     - sap_system_ascs_ers_hacluster_user_password is not defined or not sap_system_ascs_ers_hacluster_user_password
   block:
     - name: Interactive input - sap_system_ascs_ers_hacluster_user_password

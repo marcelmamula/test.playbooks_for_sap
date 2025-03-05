@@ -12,20 +12,20 @@
   gather_facts: false
   pre_tasks:
 
-    - name: Check if interactive guide is available
+    - name: Check if interactive tasks are available
       ansible.builtin.stat:
         path: ../../common_fragments/tasks/task_interactive_inputs.yml
-      register: __interactive_guide_availability
+      register: sap_playbook_interactive_tasks_availability
       ignore_errors: true
+      when: sap_playbook_interactive_input_type is defined and sap_playbook_interactive_input_type
 
     - name: Playbook Interactive - Collection of interactive inputs
       ansible.builtin.include_tasks:
         file: ../../common_fragments/tasks/task_interactive_inputs.yml
-      vars:
-        interactive_input_type: hana
       when:
         - sap_vm_provision_iac_type is undefined or sap_vm_provision_iac_platform is undefined
-        - __interactive_guide_availability.stat.exists
+        - sap_playbook_interactive_input_type is defined and sap_playbook_interactive_input_type
+        - sap_playbook_interactive_tasks_availability.stat.exists
 
 
 #### Begin Infrastructure-as-Code provisioning ####
@@ -34,18 +34,16 @@
   gather_facts: false
   tasks:
 
-    - name: Set fact sap_host_dictionary
-      ansible.builtin.set_fact:
-        __sap_host_dictionary:
-          "{{ lookup('ansible.builtin.vars', 'sap_vm_provision_' + sap_vm_provision_iac_platform
-           + '_host_specifications_dictionary')[sap_vm_provision_host_specification_plan] }}"
-
     - name: Create dynamic inventory group for Ansible Role sap_vm_provision
       ansible.builtin.add_host:
         name: "{{ item }}"
         group: sap_vm_provision_target_inventory_group
-      loop: "{{ __sap_host_dictionary.keys() }}"
+      loop: "{{ sap_playbook_host_dictionary.keys() }}"
       when: sap_vm_provision_iac_type in ['ansible', 'ansible_to_terraform']
+      vars:
+        sap_playbook_host_dictionary:
+          "{{ lookup('ansible.builtin.vars', 'sap_vm_provision_' + sap_vm_provision_iac_platform
+           + '_host_specifications_dictionary')[sap_vm_provision_host_specification_plan] }}"
 
 
 # Ansible Play target hosts pattern, use Inventory Group created by previous Ansible Task (add_host)
@@ -109,7 +107,7 @@
       delegate_to: localhost
       ansible.builtin.command:
         cmd: ansible-galaxy collection list
-      register: __collection_list_output
+      register: sap_playbook_collection_list_output
 
     - name: Inform if sap_launchpad collection is not present on execution node
       ansible.builtin.debug:
@@ -118,12 +116,12 @@
           Download of SAP Software Installation Media will not be executed with sap_launchpad,
           but pre-downloaded software can be mounted as NFS in host dictionary.
       when:
-        - not __collection_list_output.stdout_lines | select('search', 'community.sap_launchpad')
+        - not sap_playbook_collection_list_output.stdout_lines | select('search', 'community.sap_launchpad')
 
     - name: Prepare environment and download software
       ansible.builtin.include_tasks:
         file: ../../common_fragments/tasks/task_download_sap_media.yml
-      when: __collection_list_output.stdout_lines | select('search', 'community.sap_launchpad')
+      when: sap_playbook_collection_list_output.stdout_lines | select('search', 'community.sap_launchpad')
       vars:
         softwarecenter_search_list:
           "{{ sap_software_install_dictionary[sap_software_product]

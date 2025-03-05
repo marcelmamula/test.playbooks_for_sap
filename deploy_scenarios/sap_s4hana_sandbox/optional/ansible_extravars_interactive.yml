@@ -4,6 +4,9 @@
 # for input and the input will not be overwritten by Ansible's precedence for variables.
 # Adding variables into this file will result in skipped interactive prompt.
 
+# This variable controls what Interactive prompts will be executed
+sap_playbook_interactive_input_type: s4hana
+
 #### Mandatory scenario specific variables ####
 
 # Default Ansible Facts populate into default variables for all Ansible Roles

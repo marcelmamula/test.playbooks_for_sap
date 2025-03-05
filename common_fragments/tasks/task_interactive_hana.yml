@@ -3,9 +3,9 @@
 
 - name: Set temporary fact if target has High Availability
   ansible.builtin.set_fact:
-    interactive_input_type_ha: true
+    sap_playbook_interactive_input_type_ha: true
   when:
-    - interactive_input_type in ['s4hana_ha', 'hana_ha']
+    - sap_playbook_interactive_input_type in ['s4hana_ha', 'hana_ha']
 
 # Mandatory inputs
 - name: Block for sap_system_hana_db_sid
@@ -94,7 +94,7 @@
 # Mandatory inputs for HANA High Availability
 - name: Block for sap_vm_provision_ha_vip_hana_primary
   when:
-    - interactive_input_type_ha | d(false)
+    - sap_playbook_interactive_input_type_ha | d(false)
     - sap_vm_provision_ha_vip_hana_primary is not defined or not sap_vm_provision_ha_vip_hana_primary
   block:
     - name: Interactive input - sap_vm_provision_ha_vip_hana_primary
@@ -117,7 +117,7 @@
 
 - name: Block for sap_system_hana_cluster_name
   when:
-    - interactive_input_type_ha | d(false)
+    - sap_playbook_interactive_input_type_ha | d(false)
     - sap_system_hana_cluster_name is not defined or not sap_system_hana_cluster_name
   block:
     - name: Interactive input - sap_system_hana_cluster_name
@@ -135,7 +135,7 @@
 
 - name: Block for sap_system_hana_hacluster_user_password
   when:
-    - interactive_input_type_ha | d(false)
+    - sap_playbook_interactive_input_type_ha | d(false)
     - sap_system_hana_hacluster_user_password is not defined or not sap_system_hana_hacluster_user_password
   block:
     - name: Interactive input - sap_system_hana_hacluster_user_password
